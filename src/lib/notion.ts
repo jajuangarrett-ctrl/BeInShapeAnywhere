@@ -1,6 +1,6 @@
 import { Client } from '@notionhq/client'
 
-const notion = new Client({ auth: process.env.NOTION_SECRET }) as any
+const notion = new (Client as any)({ auth: process.env.NOTION_SECRET })
 
 // Types
 export interface Exercise {
