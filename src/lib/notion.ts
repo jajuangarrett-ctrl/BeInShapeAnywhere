@@ -46,7 +46,6 @@ export interface WorkoutEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
-  completed: boolean
   // Populated from exercise library
   exercise?: Exercise
 }
@@ -200,7 +199,6 @@ export async function getEntriesForProgram(programId: string): Promise<WorkoutEn
       supersetGroup: getSelect(p['Superset Group']) || null,
       weightLoad: getRichText(p['Weight / Load']),
       notes: getRichText(p['Notes']),
-      completed: getCheckbox(p['Completed']),
     }
   })
 }
@@ -358,17 +356,13 @@ export async function createExercise(data: {
   return page.id
 }
 
-// Update a single workout entry (day, completed, etc.)
+// Update a single workout entry (day change)
 export async function updateEntry(entryId: string, updates: {
   day?: string
-  completed?: boolean
 }): Promise<void> {
   const properties: any = {}
   if (updates.day !== undefined) {
     properties['Day'] = { select: { name: updates.day } }
-  }
-  if (updates.completed !== undefined) {
-    properties['Completed'] = { checkbox: updates.completed }
   }
   await notion.pages.update({
     page_id: entryId,

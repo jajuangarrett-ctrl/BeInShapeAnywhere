@@ -24,7 +24,6 @@ interface WorkoutEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
-  completed: boolean
   exercise?: Exercise
 }
 
@@ -116,22 +115,6 @@ export default function WorkoutPage() {
     return groups
   }, [todaysEntries])
 
-  const toggleCompleted = async (entryId: string, completed: boolean) => {
-    if (!program) return
-    // Optimistic update
-    setEntries(prev => prev.map(e => e.id === entryId ? { ...e, completed } : e))
-    try {
-      await fetch(`/api/programs/${program.id}/entries/update`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entryId, completed }),
-      })
-    } catch {
-      // Revert on error
-      setEntries(prev => prev.map(e => e.id === entryId ? { ...e, completed: !completed } : e))
-    }
-  }
-
   const moveWorkoutToDay = async (toDay: string) => {
     if (!program || toDay === currentDay) return
     setMovingLoading(true)
@@ -152,8 +135,6 @@ export default function WorkoutPage() {
     setMovingLoading(false)
     setMovingDay(false)
   }
-
-  const completedCount = todaysEntries.filter(e => e.completed).length
 
   if (loading) {
     return (
@@ -251,17 +232,10 @@ export default function WorkoutPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Day summary + move button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <div>
-              <span style={{ fontSize: '16px', fontWeight: 600 }}>{currentDay}</span>
-              {completedCount > 0 && (
-                <span style={{ color: 'var(--brand-green)', fontSize: '12px', marginLeft: '8px' }}>
-                  {completedCount}/{todaysEntries.length} done
-                </span>
-              )}
-            </div>
+            <span style={{ fontSize: '16px', fontWeight: 600 }}>{currentDay}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ color: 'var(--brand-muted)', fontSize: '13px' }}>
-                {todaysEntries.length} exercises
+                {todaysEntries.length} exercises · {todaysEntries.reduce((s, e) => s + (e.sets || 0), 0)} sets
               </span>
               <button
                 onClick={() => setMovingDay(!movingDay)}
@@ -363,11 +337,7 @@ export default function WorkoutPage() {
                   gap: '6px',
                 }}>
                   {group.entries.map(entry => (
-                    <ExerciseCard
-                      key={entry.id}
-                      entry={entry}
-                      onToggleCompleted={toggleCompleted}
-                    />
+                    <ExerciseCard key={entry.id} entry={entry} />
                   ))}
                 </div>
               </div>
@@ -390,46 +360,18 @@ export default function WorkoutPage() {
   )
 }
 
-function ExerciseCard({ entry, onToggleCompleted }: {
-  entry: WorkoutEntry
-  onToggleCompleted: (entryId: string, completed: boolean) => void
-}) {
+function ExerciseCard({ entry }: { entry: WorkoutEntry }) {
   const [showVideo, setShowVideo] = useState(false)
   const videoUrl = entry.exercise?.videoUrl || ''
 
   return (
     <div style={{
       background: 'var(--brand-card)',
-      border: entry.completed ? '1px solid var(--brand-green)' : '1px solid var(--brand-border)',
+      border: '1px solid var(--brand-border)',
       borderRadius: '12px',
       padding: '14px',
-      opacity: entry.completed ? 0.75 : 1,
-      transition: 'opacity 0.2s, border-color 0.2s',
     }}>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-        {/* Completion checkbox */}
-        <button
-          onClick={() => onToggleCompleted(entry.id, !entry.completed)}
-          style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '6px',
-            border: entry.completed ? '2px solid var(--brand-green)' : '2px solid var(--brand-border)',
-            background: entry.completed ? 'var(--brand-green)' : 'transparent',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            marginTop: '2px',
-            transition: 'all 0.2s',
-          }}
-        >
-          {entry.completed && (
-            <span style={{ color: '#000', fontSize: '14px', fontWeight: 700, lineHeight: 1 }}>&#10003;</span>
-          )}
-        </button>
-
         {/* Thumbnail */}
         <div
           onClick={() => videoUrl && setShowVideo(!showVideo)}
@@ -461,15 +403,7 @@ function ExerciseCard({ entry, onToggleCompleted }: {
 
         {/* Info */}
         <div style={{ flex: 1 }}>
-          <h4 style={{
-            fontSize: '15px',
-            fontWeight: 600,
-            margin: '0 0 6px',
-            textDecoration: entry.completed ? 'line-through' : 'none',
-            color: entry.completed ? 'var(--brand-muted)' : 'var(--brand-text)',
-          }}>
-            {entry.entryName}
-          </h4>
+          <h4 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 6px' }}>{entry.entryName}</h4>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             {entry.sets && (
               <div style={{ textAlign: 'center' }}>

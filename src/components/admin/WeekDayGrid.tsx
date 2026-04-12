@@ -15,7 +15,6 @@ interface BuilderEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
-  completed?: boolean
 }
 
 interface DayWorkout {
@@ -93,16 +92,9 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
               </span>
             </div>
             {dayWorkout.entries.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {dayWorkout.entries.some(e => e.completed) && (
-                  <span style={{ color: 'var(--brand-green)', fontSize: '11px', fontWeight: 600 }}>
-                    {dayWorkout.entries.filter(e => e.completed).length}/{dayWorkout.entries.length} done
-                  </span>
-                )}
-                <span style={{ color: 'var(--brand-muted)', fontSize: '11px' }}>
-                  {dayWorkout.entries.reduce((sum, e) => sum + e.sets, 0)} total sets
-                </span>
-              </div>
+              <span style={{ color: 'var(--brand-muted)', fontSize: '11px' }}>
+                {dayWorkout.entries.reduce((sum, e) => sum + e.sets, 0)} total sets
+              </span>
             )}
           </div>
 
@@ -154,22 +146,7 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
 
                       {/* Name and quick stats */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: '13px', fontWeight: 500, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {entry.completed && (
-                            <span style={{
-                              color: '#000',
-                              background: 'var(--brand-green)',
-                              borderRadius: '50%',
-                              width: '16px',
-                              height: '16px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}>&#10003;</span>
-                          )}
+                        <p style={{ fontSize: '13px', fontWeight: 500, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {entry.exerciseName}
                         </p>
                         <p style={{ fontSize: '11px', color: 'var(--brand-muted)', margin: '2px 0 0' }}>

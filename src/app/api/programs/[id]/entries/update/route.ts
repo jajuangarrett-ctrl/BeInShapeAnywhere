@@ -4,7 +4,7 @@ import { updateEntry } from '@/lib/notion'
 export async function PATCH(req: Request) {
   try {
     const body = await req.json()
-    const { entryId, day, completed } = body
+    const { entryId, day } = body
 
     if (!entryId) {
       return NextResponse.json({ error: 'entryId is required' }, { status: 400 })
@@ -12,7 +12,6 @@ export async function PATCH(req: Request) {
 
     await updateEntry(entryId, {
       ...(day !== undefined && { day }),
-      ...(completed !== undefined && { completed }),
     })
 
     return NextResponse.json({ success: true })

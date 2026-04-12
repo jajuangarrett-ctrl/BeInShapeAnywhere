@@ -29,7 +29,6 @@ export interface BuilderEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
-  completed?: boolean
 }
 
 export interface DayWorkout {
@@ -124,7 +123,6 @@ function BuilderContent() {
             supersetGroup: entry.supersetGroup,
             weightLoad: entry.weightLoad || '',
             notes: entry.notes || '',
-            completed: entry.completed || false,
           })
         }
       }
