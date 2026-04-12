@@ -29,6 +29,7 @@ export interface BuilderEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
+  completed?: boolean
 }
 
 export interface DayWorkout {
@@ -123,6 +124,7 @@ function BuilderContent() {
             supersetGroup: entry.supersetGroup,
             weightLoad: entry.weightLoad || '',
             notes: entry.notes || '',
+            completed: entry.completed || false,
           })
         }
       }
@@ -155,6 +157,12 @@ function BuilderContent() {
 
   const addExerciseToDay = (exercise: Exercise, dayIndex: number) => {
     const days = [...getCurrentDays()]
+    // Prevent duplicate exercises on the same day
+    const alreadyExists = days[dayIndex].entries.some(e => e.exerciseId === exercise.id)
+    if (alreadyExists) {
+      alert(`"${exercise.name}" is already on ${days[dayIndex].day}. Duplicates are not allowed.`)
+      return
+    }
     const newEntry: BuilderEntry = {
       tempId: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       exerciseId: exercise.id,

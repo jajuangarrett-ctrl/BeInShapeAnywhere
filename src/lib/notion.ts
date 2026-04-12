@@ -46,6 +46,7 @@ export interface WorkoutEntry {
   supersetGroup: string | null
   weightLoad: string
   notes: string
+  completed: boolean
   // Populated from exercise library
   exercise?: Exercise
 }
@@ -199,6 +200,7 @@ export async function getEntriesForProgram(programId: string): Promise<WorkoutEn
       supersetGroup: getSelect(p['Superset Group']) || null,
       weightLoad: getRichText(p['Weight / Load']),
       notes: getRichText(p['Notes']),
+      completed: getCheckbox(p['Completed']),
     }
   })
 }
@@ -321,6 +323,67 @@ export async function updateProgramPublished(programId: string, published: boole
       'Published': { checkbox: published },
     },
   })
+}
+
+// Create a new exercise in the Exercise Library
+export async function createExercise(data: {
+  name: string
+  muscleGroup?: string[]
+  exerciseCategory?: string[]
+  equipment?: string[]
+  instructions?: string
+  published?: boolean
+}): Promise<string> {
+  const dbId = process.env.NOTION_EXERCISE_DB!
+  const properties: any = {
+    'Workout Name': { title: [{ text: { content: data.name } }] },
+    'Published': { checkbox: data.published ?? true },
+  }
+  if (data.muscleGroup?.length) {
+    properties['Muscle Group'] = { multi_select: data.muscleGroup.map(n => ({ name: n })) }
+  }
+  if (data.exerciseCategory?.length) {
+    properties['Exercise Category'] = { multi_select: data.exerciseCategory.map(n => ({ name: n })) }
+  }
+  if (data.equipment?.length) {
+    properties['Equipment'] = { multi_select: data.equipment.map(n => ({ name: n })) }
+  }
+  if (data.instructions) {
+    properties['Instructions'] = { rich_text: [{ text: { content: data.instructions } }] }
+  }
+  const page = await notion.pages.create({
+    parent: { database_id: dbId },
+    properties,
+  })
+  return page.id
+}
+
+// Update a single workout entry (day, completed, etc.)
+export async function updateEntry(entryId: string, updates: {
+  day?: string
+  completed?: boolean
+}): Promise<void> {
+  const properties: any = {}
+  if (updates.day !== undefined) {
+    properties['Day'] = { select: { name: updates.day } }
+  }
+  if (updates.completed !== undefined) {
+    properties['Completed'] = { checkbox: updates.completed }
+  }
+  await notion.pages.update({
+    page_id: entryId,
+    properties,
+  })
+}
+
+// Bulk move entries from one day to another for a given program/week
+export async function moveEntriesDay(programId: string, week: number, fromDay: string, toDay: string): Promise<number> {
+  const entries = await getEntriesForProgram(programId)
+  const toMove = entries.filter(e => e.week === week && e.day === fromDay)
+  for (const entry of toMove) {
+    await updateEntry(entry.id, { day: toDay })
+  }
+  return toMove.length
 }
 
 // Get available clients (from the Exercise Library's Client select options)
