@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import ExerciseLibrary from '@/components/admin/ExerciseLibrary'
 import WeekDayGrid from '@/components/admin/WeekDayGrid'
 import ProgramSettings from '@/components/admin/ProgramSettings'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 export interface Exercise {
   id: string
@@ -55,6 +56,9 @@ function BuilderContent() {
   const [loadingProgram, setLoadingProgram] = useState(!!programId)
   const [showSettings, setShowSettings] = useState(!programId)
   const [savedProgramId, setSavedProgramId] = useState<string | null>(programId)
+  const [mobileLibraryOpen, setMobileLibraryOpen] = useState(false)
+  const [copyFromWeek, setCopyFromWeek] = useState<number | ''>('')
+  const isMobile = useIsMobile()
 
   const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -202,6 +206,11 @@ function BuilderContent() {
   const copyWeek = (fromWeek: number, toWeek: number) => {
     const sourceDays = weekPlans.get(fromWeek)
     if (!sourceDays) return
+    const targetHasEntries = (weekPlans.get(toWeek) || []).some(d => d.entries.length > 0)
+    if (targetHasEntries) {
+      const ok = window.confirm(`Week ${toWeek} already has exercises. Replace them with a copy of Week ${fromWeek}?`)
+      if (!ok) return
+    }
     const copiedDays = sourceDays.map(day => ({
       ...day,
       entries: day.entries.map(e => ({
@@ -294,36 +303,37 @@ function BuilderContent() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Top bar */}
       <div style={{
-        padding: '12px 20px',
+        padding: isMobile ? '10px 12px' : '12px 20px',
         borderBottom: '1px solid var(--brand-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        gap: '8px',
         background: 'var(--brand-card)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => router.push('/admin')}>
-            ← Back
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px', minWidth: 0, flex: 1 }}>
+          <button className="btn-secondary" style={{ padding: '6px 10px', fontSize: '13px', flexShrink: 0 }} onClick={() => router.push('/admin')}>
+            ←
           </button>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
+          <h2 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {programName || 'New Program'}
-            {client && <span style={{ color: 'var(--brand-green)', fontWeight: 400, marginLeft: '8px' }}>— {client}</span>}
+            {client && !isMobile && <span style={{ color: 'var(--brand-green)', fontWeight: 400, marginLeft: '8px' }}>— {client}</span>}
           </h2>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn-secondary" style={{ padding: '8px 14px', fontSize: '13px' }} onClick={() => setShowSettings(true)}>
-            Settings
+        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+          <button className="btn-secondary" style={{ padding: isMobile ? '8px 10px' : '8px 14px', fontSize: '13px' }} onClick={() => setShowSettings(true)}>
+            {isMobile ? '⚙️' : 'Settings'}
           </button>
           <button
             className="btn-primary"
-            style={{ padding: '8px 18px', fontSize: '13px' }}
+            style={{ padding: isMobile ? '8px 12px' : '8px 18px', fontSize: '13px' }}
             onClick={saveProgram}
             disabled={saving || !programName || !client || !password}
           >
-            {saving ? 'Saving...' : 'Save Program'}
+            {saving ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>
@@ -348,28 +358,66 @@ function BuilderContent() {
       )}
 
       {/* Main content: Exercise Library + Week Grid */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Left: Exercise Library */}
-        <div style={{
-          width: '320px',
-          minWidth: '320px',
-          borderRight: '1px solid var(--brand-border)',
-          overflow: 'auto',
-          padding: '16px',
-        }}>
-          <ExerciseLibrary exercises={exercises} onAddToDay={addExerciseToDay} days={DAYS} />
-        </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: isMobile ? 'column' : 'row', overflow: 'hidden' }}>
+        {/* Exercise Library — sidebar on desktop, bottom-sheet modal on mobile */}
+        {!isMobile && (
+          <div style={{
+            width: '320px',
+            minWidth: '320px',
+            borderRight: '1px solid var(--brand-border)',
+            overflow: 'auto',
+            padding: '16px',
+          }}>
+            <ExerciseLibrary exercises={exercises} onAddToDay={addExerciseToDay} days={DAYS} />
+          </div>
+        )}
+
+        {isMobile && mobileLibraryOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'var(--brand-dark)',
+            zIndex: 80,
+            display: 'flex',
+            flexDirection: 'column',
+          }}>
+            <div style={{
+              padding: '12px 16px',
+              borderBottom: '1px solid var(--brand-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'var(--brand-card)',
+            }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>Exercise Library</h3>
+              <button
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '13px' }}
+                onClick={() => setMobileLibraryOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+              <ExerciseLibrary
+                exercises={exercises}
+                onAddToDay={(ex, dayIdx) => { addExerciseToDay(ex, dayIdx); setMobileLibraryOpen(false) }}
+                days={DAYS}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Right: Week/Day Grid */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+        <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '12px' : '16px', paddingBottom: isMobile ? '80px' : '16px' }}>
           {/* Week tabs */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             {Array.from({ length: totalWeeks }, (_, i) => i + 1).map(w => (
               <button
                 key={w}
                 onClick={() => setCurrentWeek(w)}
                 style={{
-                  padding: '8px 16px',
+                  padding: isMobile ? '10px 14px' : '8px 16px',
                   borderRadius: '8px',
                   border: currentWeek === w ? '1px solid var(--brand-green)' : '1px solid var(--brand-border)',
                   background: currentWeek === w ? 'rgba(74, 222, 128, 0.15)' : 'transparent',
@@ -382,25 +430,82 @@ function BuilderContent() {
                 Week {w}
               </button>
             ))}
-            {currentWeek > 1 && (
+          </div>
+
+          {/* Copy-from-week controls */}
+          {totalWeeks > 1 && (
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              marginBottom: '16px',
+              flexWrap: 'wrap',
+              padding: '10px 12px',
+              background: 'var(--brand-card)',
+              border: '1px solid var(--brand-border)',
+              borderRadius: '8px',
+            }}>
+              <span style={{ fontSize: '12px', color: 'var(--brand-muted)' }}>
+                Copy into Week {currentWeek} from:
+              </span>
+              <select
+                className="input-field"
+                value={copyFromWeek}
+                onChange={e => setCopyFromWeek(e.target.value ? parseInt(e.target.value) : '')}
+                style={{ padding: '6px 30px 6px 10px', fontSize: '13px', width: 'auto', minWidth: '120px' }}
+              >
+                <option value="">Select week...</option>
+                {Array.from({ length: totalWeeks }, (_, i) => i + 1)
+                  .filter(w => w !== currentWeek)
+                  .map(w => (
+                    <option key={w} value={w}>Week {w}</option>
+                  ))}
+              </select>
               <button
                 className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px', marginLeft: '8px' }}
-                onClick={() => copyWeek(currentWeek - 1, currentWeek)}
+                style={{ padding: '6px 14px', fontSize: '12px' }}
+                disabled={copyFromWeek === ''}
+                onClick={() => {
+                  if (copyFromWeek !== '') {
+                    copyWeek(copyFromWeek, currentWeek)
+                    setCopyFromWeek('')
+                  }
+                }}
               >
-                Copy Week {currentWeek - 1}
+                Copy
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <WeekDayGrid
             days={getCurrentDays()}
             onUpdateDays={updateDays}
             onRemoveEntry={removeEntry}
             onUpdateEntry={updateEntry}
+            isMobile={isMobile}
           />
         </div>
       </div>
+
+      {/* Mobile: floating "Add Exercise" button */}
+      {isMobile && !mobileLibraryOpen && (
+        <button
+          className="btn-primary"
+          onClick={() => setMobileLibraryOpen(true)}
+          style={{
+            position: 'fixed',
+            bottom: '16px',
+            right: '16px',
+            padding: '14px 20px',
+            fontSize: '14px',
+            borderRadius: '999px',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+            zIndex: 60,
+          }}
+        >
+          + Add Exercise
+        </button>
+      )}
     </div>
   )
 }

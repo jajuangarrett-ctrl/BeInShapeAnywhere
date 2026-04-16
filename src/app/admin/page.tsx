@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 interface Program {
   id: string
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (!sessionStorage.getItem('admin_auth')) {
@@ -50,20 +52,27 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', padding: isMobile ? '16px' : '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      <div style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between',
+        alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? '16px' : '12px',
+        marginBottom: isMobile ? '20px' : '32px',
+      }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, margin: 0 }}>
+          <h1 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: 700, margin: 0 }}>
             🏋️ BeInShape<span style={{ color: 'var(--brand-green)' }}>Anywhere</span>
           </h1>
           <p style={{ color: 'var(--brand-muted)', fontSize: '14px', margin: '4px 0 0' }}>Trainer Dashboard</p>
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button className="btn-primary" onClick={() => router.push('/admin/builder')}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn-primary" style={{ flex: isMobile ? 1 : undefined }} onClick={() => router.push('/admin/builder')}>
             + New Program
           </button>
-          <button className="btn-secondary" onClick={() => { sessionStorage.removeItem('admin_auth'); router.push('/') }}>
+          <button className="btn-secondary" style={{ flex: isMobile ? 1 : undefined }} onClick={() => { sessionStorage.removeItem('admin_auth'); router.push('/') }}>
             Logout
           </button>
         </div>
@@ -76,7 +85,7 @@ export default function AdminDashboard() {
           <p>Click "New Program" to create your first workout program</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
           {programs.map((prog) => (
             <div
               key={prog.id}

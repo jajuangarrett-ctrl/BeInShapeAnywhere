@@ -27,6 +27,7 @@ interface WeekDayGridProps {
   onUpdateDays: (days: DayWorkout[]) => void
   onRemoveEntry: (dayIndex: number, tempId: string) => void
   onUpdateEntry: (dayIndex: number, tempId: string, updates: Partial<BuilderEntry>) => void
+  isMobile?: boolean
 }
 
 const SUPERSET_COLORS: Record<string, string> = {
@@ -47,8 +48,11 @@ const DAY_COLORS: Record<string, string> = {
   Sunday: '#a3a3a3',
 }
 
-export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdateEntry }: WeekDayGridProps) {
+export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdateEntry, isMobile = false }: WeekDayGridProps) {
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null)
+  const btnSize = isMobile ? 28 : 18
+  const btnFontSize = isMobile ? '14px' : '10px'
+  const removeSize = isMobile ? 32 : 22
 
   const moveEntry = (dayIndex: number, fromIdx: number, toIdx: number) => {
     const newDays = [...days]
@@ -128,12 +132,12 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
                         <button
                           disabled={entryIdx === 0}
                           onClick={() => moveEntry(dayIdx, entryIdx, entryIdx - 1)}
-                          style={{ background: 'none', border: 'none', color: entryIdx === 0 ? '#333' : 'var(--brand-muted)', cursor: entryIdx === 0 ? 'default' : 'pointer', fontSize: '10px', padding: '2px' }}
+                          style={{ background: 'none', border: '1px solid transparent', borderColor: entryIdx === 0 ? 'transparent' : 'var(--brand-border)', borderRadius: '4px', color: entryIdx === 0 ? '#333' : 'var(--brand-muted)', cursor: entryIdx === 0 ? 'default' : 'pointer', fontSize: btnFontSize, width: btnSize, height: btnSize, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                         >▲</button>
                         <button
                           disabled={entryIdx === dayWorkout.entries.length - 1}
                           onClick={() => moveEntry(dayIdx, entryIdx, entryIdx + 1)}
-                          style={{ background: 'none', border: 'none', color: entryIdx === dayWorkout.entries.length - 1 ? '#333' : 'var(--brand-muted)', cursor: entryIdx === dayWorkout.entries.length - 1 ? 'default' : 'pointer', fontSize: '10px', padding: '2px' }}
+                          style={{ background: 'none', border: '1px solid transparent', borderColor: entryIdx === dayWorkout.entries.length - 1 ? 'transparent' : 'var(--brand-border)', borderRadius: '4px', color: entryIdx === dayWorkout.entries.length - 1 ? '#333' : 'var(--brand-muted)', cursor: entryIdx === dayWorkout.entries.length - 1 ? 'default' : 'pointer', fontSize: btnFontSize, width: btnSize, height: btnSize, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                         >▼</button>
                       </div>
 
@@ -171,7 +175,7 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
                       {/* Expand/collapse */}
                       <button
                         onClick={() => setExpandedEntry(isExpanded ? null : entry.tempId)}
-                        style={{ background: 'none', border: 'none', color: 'var(--brand-muted)', cursor: 'pointer', fontSize: '12px', padding: '4px' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--brand-muted)', cursor: 'pointer', fontSize: isMobile ? '16px' : '12px', padding: '4px', width: removeSize, height: removeSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         {isExpanded ? '▾' : '▸'}
                       </button>
@@ -179,7 +183,7 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
                       {/* Remove */}
                       <button
                         onClick={() => onRemoveEntry(dayIdx, entry.tempId)}
-                        style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: '14px', padding: '4px' }}
+                        style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontSize: isMobile ? '22px' : '14px', padding: '4px', width: removeSize, height: removeSize, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         ×
                       </button>
@@ -187,7 +191,7 @@ export default function WeekDayGrid({ days, onUpdateDays, onRemoveEntry, onUpdat
 
                     {/* Expanded edit fields */}
                     {isExpanded && (
-                      <div style={{ marginTop: '10px', paddingLeft: '28px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
+                      <div style={{ marginTop: '10px', paddingLeft: isMobile ? '0' : '28px', display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(100px, 1fr))', gap: '8px' }}>
                         <div>
                           <label style={{ fontSize: '10px', color: 'var(--brand-muted)', display: 'block', marginBottom: '3px' }}>Sets</label>
                           <input
