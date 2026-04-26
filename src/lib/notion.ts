@@ -390,3 +390,73 @@ export async function getClients(): Promise<string[]> {
   }
   return []
 }
+
+export interface WorkoutLog {
+  id: string
+  name: string
+  programId: string
+  completedAt: string
+  durationMin: number
+  setsCompleted: number
+  totalSets: number
+  notes: string
+  prs: string[]
+}
+
+export async function logWorkout(data: {
+  programName: string
+  programId: string
+  completedAt: string
+  durationMin: number
+  setsCompleted: number
+  totalSets: number
+  notes: string
+  prs: string[]
+}): Promise<void> {
+  const dbId = process.env.NOTION_LOGS_DB
+  if (!dbId) {
+    console.warn('NOTION_LOGS_DB not configured — workout log skipped')
+    return
+  }
+  const date = new Date(data.completedAt).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  })
+  await notion.pages.create({
+    parent: { database_id: dbId },
+    properties: {
+      'Name': { title: [{ text: { content: `${data.programName} – ${date}` } }] },
+      'Program': { relation: [{ id: data.programId }] },
+      'Completed At': { date: { start: data.completedAt } },
+      'Duration (min)': { number: data.durationMin },
+      'Sets Completed': { number: data.setsCompleted },
+      'Total Sets': { number: data.totalSets },
+      'Notes': { rich_text: data.notes ? [{ text: { content: data.notes.slice(0, 2000) } }] : [] },
+      'PRs': { rich_text: data.prs.length ? [{ text: { content: data.prs.join(', ') } }] : [] },
+    },
+  })
+}
+
+export async function getLogsForProgram(programId: string): Promise<WorkoutLog[]> {
+  const dbId = process.env.NOTION_LOGS_DB
+  if (!dbId) return []
+  const response = await notion.databases.query({
+    database_id: dbId,
+    filter: { property: 'Program', relation: { contains: programId } },
+    sorts: [{ property: 'Completed At', direction: 'descending' }],
+    page_size: 100,
+  })
+  return response.results.map((page: any) => {
+    const p = page.properties
+    return {
+      id: page.id,
+      name: getTitle(p['Name']),
+      programId: getRelationIds(p['Program'])[0] || '',
+      completedAt: getDate(p['Completed At']) || '',
+      durationMin: getNumber(p['Duration (min)']) || 0,
+      setsCompleted: getNumber(p['Sets Completed']) || 0,
+      totalSets: getNumber(p['Total Sets']) || 0,
+      notes: getRichText(p['Notes']),
+      prs: getRichText(p['PRs']).split(', ').filter(Boolean),
+    }
+  })
+}

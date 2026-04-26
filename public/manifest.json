@@ -1,0 +1,17 @@
+{
+  "name": "BeInShapeAnywhere",
+  "short_name": "BISA",
+  "description": "Your personal training workout platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#4ADE80",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}
