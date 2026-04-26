@@ -102,6 +102,37 @@ src/
 
 ---
 
+## Admin Workflows (How Things Currently Work)
+
+### Adding a New Client
+Clients are **not added through the app dashboard yet** — client names are stored as Select options on the **Client** property inside the Exercise Library database in Notion.
+
+**Steps to add a new client:**
+1. Open the [Exercise Library database](https://www.notion.so/41645763661a4ec48827b83e2be18a1c) in Notion
+2. Open any exercise row
+3. Find the **Client** property (Select type)
+4. Click it → **Add option** → type the new client's name → confirm
+5. The name will now appear in the Client dropdown when creating a new program in the admin builder
+
+> **Future improvement:** Build an "Add Client" button directly in the admin dashboard that writes the new option to Notion via the API, so Jenny never has to touch Notion for client management.
+
+### Creating a Program for a Client
+1. Log into the admin dashboard at [beinshapeanywhere.netlify.app](https://beinshapeanywhere.netlify.app) with the admin password
+2. Click **New Program**
+3. Fill in: Program Name, Client (from dropdown), Total Weeks, Client Password (the code the client uses to log in), and an optional description
+4. Use the builder to add exercises across days — drag to reorder, group into supersets (A–E), set reps/sets/rest
+5. Click **Publish** when ready — the client can now log in with their password
+
+### Client Login Flow
+1. Client goes to [beinshapeanywhere.netlify.app](https://beinshapeanywhere.netlify.app)
+2. Clicks **Client Login** and enters their program password
+3. The app loads their program — they can navigate weeks and days, check off sets, use the rest timer, and hit **Complete Workout** to log the session to Notion
+
+### Workout Logs Database
+Completed workouts write to the **📋 Workout Logs** Notion database (ID: `4792359b37aa4ea0a72f5be93585392f`). Each log entry records: program name, date completed, duration, sets completed vs total, client notes, and any PRs flagged.
+
+---
+
 ## How to Run Locally
 
 ```bash
