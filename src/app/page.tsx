@@ -7,6 +7,7 @@ export default function Home() {
   const router = useRouter()
   const [mode, setMode] = useState<'select' | 'admin' | 'client'>('select')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -82,20 +83,18 @@ export default function Home() {
 
         {mode === 'admin' && (
           <form onSubmit={handleAdminLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <input
-              className="input-field"
-              type="password"
-              placeholder="Admin password"
+            <PasswordField
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-              style={{ textAlign: 'center', fontSize: '16px', padding: '14px' }}
+              onChange={setPassword}
+              show={showPassword}
+              onToggle={() => setShowPassword(s => !s)}
+              placeholder="Admin password"
             />
             {error && <p style={{ color: '#F87171', fontSize: '13px', margin: 0 }}>{error}</p>}
             <button className="btn-primary" type="submit" disabled={loading || !password} style={{ fontSize: '16px', padding: '14px' }}>
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
-            <button className="btn-secondary" type="button" onClick={() => { setMode('select'); setError(''); setPassword('') }}>
+            <button className="btn-secondary" type="button" onClick={() => { setMode('select'); setError(''); setPassword(''); setShowPassword(false) }}>
               Back
             </button>
           </form>
@@ -103,25 +102,69 @@ export default function Home() {
 
         {mode === 'client' && (
           <form onSubmit={handleClientLogin} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <input
-              className="input-field"
-              type="password"
-              placeholder="Enter your workout code"
+            <PasswordField
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoFocus
-              style={{ textAlign: 'center', fontSize: '16px', padding: '14px' }}
+              onChange={setPassword}
+              show={showPassword}
+              onToggle={() => setShowPassword(s => !s)}
+              placeholder="Enter your workout code"
             />
             {error && <p style={{ color: '#F87171', fontSize: '13px', margin: 0 }}>{error}</p>}
             <button className="btn-primary" type="submit" disabled={loading || !password} style={{ fontSize: '16px', padding: '14px' }}>
               {loading ? 'Loading...' : 'View My Workouts'}
             </button>
-            <button className="btn-secondary" type="button" onClick={() => { setMode('select'); setError(''); setPassword('') }}>
+            <button className="btn-secondary" type="button" onClick={() => { setMode('select'); setError(''); setPassword(''); setShowPassword(false) }}>
               Back
             </button>
           </form>
         )}
       </div>
+    </div>
+  )
+}
+
+function PasswordField({
+  value, onChange, show, onToggle, placeholder,
+}: {
+  value: string
+  onChange: (v: string) => void
+  show: boolean
+  onToggle: () => void
+  placeholder: string
+}) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <input
+        className="input-field"
+        type={show ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        autoFocus
+        style={{ textAlign: 'center', fontSize: '16px', padding: '14px', paddingRight: '64px' }}
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        style={{
+          position: 'absolute',
+          right: '8px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'transparent',
+          border: 'none',
+          color: 'var(--brand-muted)',
+          cursor: 'pointer',
+          fontSize: '12px',
+          fontWeight: 600,
+          padding: '6px 10px',
+          borderRadius: '6px',
+          letterSpacing: '0.5px',
+        }}
+      >
+        {show ? 'HIDE' : 'SHOW'}
+      </button>
     </div>
   )
 }
