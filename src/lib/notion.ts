@@ -356,6 +356,16 @@ export async function createExercise(data: {
   return page.id
 }
 
+// Update an exercise's Video URL property
+export async function updateExerciseVideoUrl(exerciseId: string, videoUrl: string): Promise<void> {
+  await notion.pages.update({
+    page_id: exerciseId,
+    properties: {
+      'Video URL': { url: videoUrl },
+    },
+  })
+}
+
 // Update a single workout entry (day change)
 export async function updateEntry(entryId: string, updates: {
   day?: string
