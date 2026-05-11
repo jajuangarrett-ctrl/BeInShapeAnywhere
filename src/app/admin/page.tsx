@@ -11,6 +11,7 @@ interface Program {
   totalWeeks: number | null
   published: boolean
   description: string
+  clientNote: string
 }
 
 export default function AdminDashboard() {
@@ -18,6 +19,9 @@ export default function AdminDashboard() {
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const isMobile = useIsMobile()
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [noteDraft, setNoteDraft] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
 
   useEffect(() => {
     if (!sessionStorage.getItem('admin_auth')) {
@@ -40,6 +44,28 @@ export default function AdminDashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ published: !published }),
     })
+    fetchPrograms()
+  }
+
+  const startEditNote = (prog: Program) => {
+    setEditingNoteId(prog.id)
+    setNoteDraft(prog.clientNote || '')
+  }
+
+  const cancelEditNote = () => {
+    setEditingNoteId(null)
+    setNoteDraft('')
+  }
+
+  const saveNote = async (id: string) => {
+    setSavingNote(true)
+    await fetch(`/api/programs/${id}/note`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientNote: noteDraft }),
+    })
+    setSavingNote(false)
+    setEditingNoteId(null)
     fetchPrograms()
   }
 
@@ -114,10 +140,83 @@ export default function AdminDashboard() {
 
               <h3 style={{ fontSize: '18px', fontWeight: 600, margin: '0 0 4px', paddingRight: '24px' }}>{prog.name}</h3>
               <p style={{ color: 'var(--brand-green)', fontSize: '14px', margin: '0 0 8px' }}>{prog.client}</p>
-              <p style={{ color: 'var(--brand-muted)', fontSize: '13px', margin: '0 0 16px', lineHeight: 1.4 }}>
+              <p style={{ color: 'var(--brand-muted)', fontSize: '13px', margin: '0 0 12px', lineHeight: 1.4 }}>
                 {prog.totalWeeks ? `${prog.totalWeeks} weeks` : 'No duration set'}
                 {prog.description && ` — ${prog.description.slice(0, 80)}${prog.description.length > 80 ? '...' : ''}`}
               </p>
+
+              {/* Client Note quick-edit */}
+              <div style={{
+                background: 'rgba(74, 222, 128, 0.06)',
+                border: '1px solid rgba(74, 222, 128, 0.25)',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                marginBottom: '14px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--brand-green)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    📝 Note to Client
+                  </span>
+                  {editingNoteId !== prog.id && (
+                    <button
+                      onClick={() => startEditNote(prog)}
+                      style={{ background: 'none', border: 'none', color: 'var(--brand-muted)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                    >
+                      {prog.clientNote ? 'Edit' : '+ Add'}
+                    </button>
+                  )}
+                </div>
+                {editingNoteId === prog.id ? (
+                  <>
+                    <textarea
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      placeholder="Quick update for your client (e.g. 'Great work this week — push for one more rep on every set!')"
+                      rows={3}
+                      style={{
+                        width: '100%',
+                        background: 'var(--brand-bg)',
+                        border: '1px solid var(--brand-border)',
+                        borderRadius: '6px',
+                        padding: '8px 10px',
+                        fontSize: '13px',
+                        color: 'inherit',
+                        resize: 'vertical',
+                        fontFamily: 'inherit',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={cancelEditNote}
+                        disabled={savingNote}
+                        style={{ background: 'none', border: 'none', color: 'var(--brand-muted)', fontSize: '12px', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => saveNote(prog.id)}
+                        disabled={savingNote}
+                        style={{
+                          background: 'var(--brand-green)',
+                          color: 'var(--brand-bg)',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: savingNote ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {savingNote ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.4, color: prog.clientNote ? 'inherit' : 'var(--brand-muted)', fontStyle: prog.clientNote ? 'normal' : 'italic' }}>
+                    {prog.clientNote || 'No note yet — click Add to leave one for your client.'}
+                  </p>
+                )}
+              </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button

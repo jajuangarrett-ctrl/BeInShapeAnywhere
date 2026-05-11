@@ -30,6 +30,7 @@ export interface TrainingProgram {
   published: boolean
   description: string
   coachingNotes: string
+  clientNote: string
 }
 
 export interface WorkoutEntry {
@@ -153,8 +154,18 @@ export async function getPrograms(): Promise<TrainingProgram[]> {
       published: getCheckbox(p['Published']),
       description: getRichText(p['Description']),
       coachingNotes: getRichText(p['Coaching Notes']),
+      clientNote: getRichText(p['Client Note']),
     }
   }).filter((prog: TrainingProgram) => prog.name)
+}
+
+export async function updateClientNote(programId: string, clientNote: string): Promise<void> {
+  await notion.pages.update({
+    page_id: programId,
+    properties: {
+      'Client Note': { rich_text: [{ text: { content: clientNote } }] },
+    },
+  })
 }
 
 // Fetch a single program by password
@@ -238,7 +249,7 @@ export async function createProgram(data: {
     'Client': { select: { name: data.client } },
     'Total Weeks': { number: data.totalWeeks },
     'Password': { rich_text: [{ text: { content: data.password } }] },
-    'Published': { checkbox: false },
+    'Published': { checkbox: true },
     'Description': { rich_text: [{ text: { content: data.description } }] },
   }
   if (data.startDate) {

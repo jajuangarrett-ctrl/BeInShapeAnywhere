@@ -34,6 +34,7 @@ interface Program {
   client: string
   totalWeeks: number | null
   description: string
+  clientNote: string
 }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -348,6 +349,32 @@ export default function WorkoutPage() {
           </p>
         )}
       </div>
+
+      {/* Trainer's note callout */}
+      {program?.clientNote && (
+        <div style={{
+          background: 'rgba(74, 222, 128, 0.1)',
+          border: '1px solid rgba(74, 222, 128, 0.4)',
+          borderLeft: '4px solid var(--brand-green)',
+          borderRadius: '10px',
+          padding: '14px 16px',
+          marginBottom: '16px',
+        }}>
+          <div style={{
+            fontSize: '11px',
+            fontWeight: 700,
+            color: 'var(--brand-green)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.6px',
+            marginBottom: '6px',
+          }}>
+            📝 Note from your trainer
+          </div>
+          <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+            {program.clientNote}
+          </p>
+        </div>
+      )}
 
       {/* Training overview — shows when a day is selected */}
       {currentDay && totalSets > 0 && (
