@@ -398,6 +398,9 @@ export async function getClients(): Promise<string[]> {
   if (clientProp?.type === 'select') {
     return clientProp.select.options.map((o: any) => o.name)
   }
+  if (clientProp?.type === 'multi_select') {
+    return clientProp.multi_select.options.map((o: any) => o.name)
+  }
   return []
 }
 
