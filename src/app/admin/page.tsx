@@ -13,25 +13,11 @@ interface Program {
   description: string
 }
 
-interface GiphySyncResult {
-  total: number
-  updated: number
-  skipped: number
-  notFound: number
-  errored: number
-  details: { updated: string[]; skipped: string[]; notFound: string[]; errored: string[] }
-}
-
 export default function AdminDashboard() {
   const router = useRouter()
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
   const isMobile = useIsMobile()
-
-  // Giphy sync state
-  const [syncing, setSyncing] = useState(false)
-  const [syncResult, setSyncResult] = useState<GiphySyncResult | null>(null)
-  const [syncError, setSyncError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!sessionStorage.getItem('admin_auth')) {
@@ -40,33 +26,6 @@ export default function AdminDashboard() {
     }
     fetchPrograms()
   }, [router])
-
-  const syncGiphy = async (overwriteExisting: boolean) => {
-    if (!confirm(overwriteExisting
-      ? 'Overwrite ALL exercise videos with fresh Giphy results from DocGarrett channel? Existing URLs will be replaced.'
-      : 'Auto-fill exercises that don\'t have a Video URL with matching GIFs from your DocGarrett Giphy channel?')) {
-      return
-    }
-    setSyncing(true)
-    setSyncResult(null)
-    setSyncError(null)
-    try {
-      const res = await fetch('/api/giphy/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ overwriteExisting }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setSyncError(data.error || 'Sync failed')
-      } else {
-        setSyncResult(data)
-      }
-    } catch (err: any) {
-      setSyncError(err.message || 'Network error')
-    }
-    setSyncing(false)
-  }
 
   const fetchPrograms = async () => {
     const res = await fetch('/api/programs')
@@ -117,90 +76,6 @@ export default function AdminDashboard() {
             Logout
           </button>
         </div>
-      </div>
-
-      {/* Giphy sync panel */}
-      <div style={{
-        background: 'var(--brand-card)',
-        border: '1px solid var(--brand-border)',
-        borderRadius: '12px',
-        padding: isMobile ? '14px' : '16px 18px',
-        marginBottom: isMobile ? '20px' : '24px',
-      }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: '12px',
-          alignItems: isMobile ? 'stretch' : 'center',
-          justifyContent: 'space-between',
-        }}>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 4px' }}>
-              🎬 Sync exercise videos from <span style={{ color: 'var(--brand-green)' }}>Giphy</span>
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--brand-muted)', margin: 0, lineHeight: 1.4 }}>
-              Pulls matching GIFs from your <a href="https://giphy.com/channel/DocGarrett" target="_blank" rel="noreferrer" style={{ color: 'var(--brand-green)' }}>DocGarrett channel</a> and writes the URLs to the Exercise Library in Notion.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-            <button
-              className="btn-secondary"
-              style={{ fontSize: '12px', padding: '8px 14px' }}
-              onClick={() => syncGiphy(false)}
-              disabled={syncing}
-            >
-              {syncing ? 'Syncing...' : 'Fill blanks'}
-            </button>
-            <button
-              className="btn-secondary"
-              style={{ fontSize: '12px', padding: '8px 14px', borderColor: '#FB923C', color: '#FB923C' }}
-              onClick={() => syncGiphy(true)}
-              disabled={syncing}
-            >
-              Overwrite all
-            </button>
-          </div>
-        </div>
-
-        {syncResult && (
-          <div style={{
-            marginTop: '12px', padding: '10px 12px',
-            background: 'rgba(74, 222, 128, 0.08)',
-            border: '1px solid rgba(74, 222, 128, 0.3)',
-            borderRadius: '8px',
-            fontSize: '12px',
-          }}>
-            <div style={{ fontWeight: 600, color: 'var(--brand-green)', marginBottom: '4px' }}>
-              ✓ Synced {syncResult.updated} of {syncResult.total} exercises
-            </div>
-            <div style={{ color: 'var(--brand-muted)' }}>
-              {syncResult.skipped > 0 && <span>Skipped {syncResult.skipped} (already had video) · </span>}
-              {syncResult.notFound > 0 && <span style={{ color: '#FB923C' }}>No match for {syncResult.notFound} · </span>}
-              {syncResult.errored > 0 && <span style={{ color: '#F87171' }}>{syncResult.errored} errored</span>}
-            </div>
-            {syncResult.details.notFound.length > 0 && (
-              <details style={{ marginTop: '6px' }}>
-                <summary style={{ cursor: 'pointer', fontSize: '11px' }}>Show no-match list</summary>
-                <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--brand-muted)' }}>
-                  {syncResult.details.notFound.join(', ')}
-                </div>
-              </details>
-            )}
-          </div>
-        )}
-
-        {syncError && (
-          <div style={{
-            marginTop: '12px', padding: '10px 12px',
-            background: 'rgba(248, 113, 113, 0.08)',
-            border: '1px solid rgba(248, 113, 113, 0.3)',
-            borderRadius: '8px',
-            fontSize: '12px',
-            color: '#F87171',
-          }}>
-            ✗ {syncError}
-          </div>
-        )}
       </div>
 
       {/* Programs Grid */}

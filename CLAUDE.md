@@ -131,15 +131,6 @@ Clients are **not added through the app dashboard yet** — client names are sto
 ### Workout Logs Database
 Completed workouts write to the **📋 Workout Logs** Notion database (ID: `4792359b37aa4ea0a72f5be93585392f`). Each log entry records: program name, date completed, duration, sets completed vs total, client notes, and any PRs flagged.
 
-### Auto-syncing Exercise Videos from Giphy
-The admin dashboard has a "Sync from Giphy" panel that pulls GIFs from Franklin's [DocGarrett channel](https://giphy.com/channel/DocGarrett) and writes them to the Video URL property of matching exercises in the Notion Exercise Library.
-
-- **Fill blanks** — only updates exercises that don't already have a Video URL (safe default)
-- **Overwrite all** — replaces every exercise's Video URL with a fresh Giphy match (use when re-curating)
-
-Requires `GIPHY_API_KEY` env var (get one free at https://developers.giphy.com/dashboard).
-The match uses `@docgarrett <exercise name>` Giphy search with `limit=5` and picks the best result. Implementation lives in `src/lib/giphy.ts` and `src/app/api/giphy/sync/route.ts`.
-
 ---
 
 ## How to Run Locally
